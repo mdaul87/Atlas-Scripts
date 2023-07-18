@@ -28,6 +28,8 @@ check_beta() {
 }
 
 # This is for the X96 Mini and X96W Atvs. Can be adapted to other ATVs that have a led status indicator
+# Red = Device online
+# Blue = Device failing/failed
 
 led_red(){
     echo 0 > /sys/class/leds/led-sys/brightness
@@ -71,22 +73,22 @@ configfile_rdm() {
     if [[ $rdmConnect = "OK" ]]; then
         log "RDM connection status: $rdmConnect"
         log "RDM Connection was successful!"
-        led_blue
+        led_red
     elif [[ $rdmConnect = "Unauthorized" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
-        led_red
+        led_blue
         sleep $((240+$RANDOM%10))
     elif [[ $rdmConnect = "Internal" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "The RDM Server couldn't response properly to eMagisk!"
-        led_red
+        led_blue
         sleep $((240+$RANDOM%10))
 
     elif [[ -z $rdmConnect ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your ATV internet connection!"
-        led_red
+        led_blue
         counter=$((counter+1))
         if [[ $counter -gt 4 ]];then
             log "Critical restart threshold of $counter reached. Rebooting device..."
@@ -98,7 +100,7 @@ configfile_rdm() {
     else
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Something different went wrong..."
-        led_red
+        led_blue
         sleep $((240+$RANDOM%10))
     fi
 }
@@ -223,17 +225,17 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
                                 log "Last seen at RDM is greater than 5 minutes -> MITM Service will be restarting..."
                                 curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"restart","RPL":"'$atvdetails_interval'"}'
                                 force_restart
-                                led_red
+                                led_blue
                                 counter=$((counter+1))
                                 log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
                         elif [[ $calcTimeDiff -le 60 ]]; then
                                 log "Our device is live!"
                                 counter=0
-                                led_blue
+                                led_red
                         else
                                 log "Last seen time is a bit off. Will check again later."
                         counter=0
-                        led_blue
+                        led_red
                         fi
                 fi
             log "Scheduling next check in 4 minutes..."
@@ -291,17 +293,17 @@ elif [ "$(pm list packages $GOCHEATSPKG)" = "package:$GOCHEATSPKG" -a "$mitm" = 
                                 log "Last seen at RDM is greater than 5 minutes -> MITM Service will be restarting..."
                                 curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"restart","RPL":"'$atvdetails_interval'"}'
                                 force_restart
-                                led_red
+                                led_blue
                                 counter=$((counter+1))
                                 log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
                         elif [[ $calcTimeDiff -le 60 ]]; then
                                 log "Our device is live!"
                                 counter=0
-                                led_blue
+                                led_red
                         else
                                 log "Last seen time is a bit off. Will check again later."
                         counter=0
-                        led_blue
+                        led_red
                         fi
                 fi
             log "Scheduling next check in 4 minutes..."
