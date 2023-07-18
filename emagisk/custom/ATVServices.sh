@@ -42,13 +42,13 @@ led_blue(){
 # Stops MITM and Pogo and restarts MITM MappingService
 
 force_restart() {
-    if [ "$mitm" = "atlas" ];then
+    if [ "$mitm" = "atlas" ]; then
         am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
         am force-stop $POGOPKG
         am force-stop $ATLASPKG
         sleep 5
         am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
-    elif [ "$mitm" = "gc" ];then
+    elif [ "$mitm" = "gc" ]; then
         am force-stop $GOCHEATSPKG
         sleep 5
         monkey -p $GOCHEATSPKG 1
@@ -90,7 +90,7 @@ configfile_rdm() {
         log "Check your ATV internet connection!"
         led_blue
         counter=$((counter+1))
-        if [[ $counter -gt 4 ]];then
+        if [[ $counter -gt 4 ]]; then
             log "Critical restart threshold of $counter reached. Rebooting device..."
             reboot
             # We need to wait for the reboot to actually happen or the process might be interrupted
@@ -159,12 +159,12 @@ fi
 
 # Start MITM on boot
 
-if [ $mitm = "atlas" ];then
+if [ $mitm = "atlas" ]; then
     if ! pidof "$ATLASPKG:mapping"; then
         log "Starting Atlas Mapping Service"
         force_restart
     fi
-elif [ $mitm = "gc" ];then
+elif [ $mitm = "gc" ]; then
     if ! pidof "GOCHEATSPKG"; then
         log "Starting GC Mapping Service"
         force_restart
@@ -183,7 +183,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
             sleep $((240+$RANDOM%10))
             configfile_rdm
 
-            if [[ $counter -gt 3 ]];then
+            if [[ $counter -gt 3 ]]; then
             log "Critical restart threshold of $counter reached. Rebooting device..."
             curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"reboot","RPL":"'$atvdetails_interval'"}'
             sleep 1
@@ -199,50 +199,50 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
 
                 until [[ $rdmDeviceName = $atlasDeviceName ]]
                 do
-                        $((rdmDeviceID++))
-                        rdmDeviceInfo=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
-                        rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+                    $((rdmDeviceID++))
+                    rdmDeviceInfo=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
+                    rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
 
-                        if [[ -z $rdmDeviceInfo ]]; then
-                    log "Probably reached end of device list or encountered a different issue!"
-                    log "Set RDM Device ID to 1, recheck RDM connection and repull $CONFIGFILE"
-                                rdmDeviceID=1
-                    #repull rdm values + recheck rdm connection
-                    configfile_rdm
-                                rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
-                        fi
+                    if [[ -z $rdmDeviceInfo ]]; then
+                        log "Probably reached end of device list or encountered a different issue!"
+                        log "Set RDM Device ID to 1, recheck RDM connection and repull $CONFIGFILE"
+                        rdmDeviceID=1
+                        #repull rdm values + recheck rdm connection
+                        configfile_rdm
+                        rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+                    fi
                 done
 
                 log "Found our device! Checking for timestamps..."
                 rdmDeviceLastseen=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
                 if [[ -z $rdmDeviceLastseen ]]; then
-                        log "The device last seen status is empty!"
+                    log "The device last seen status is empty!"
                 else
-                        now="$(date +'%s')"
-                        calcTimeDiff=$(($now - $rdmDeviceLastseen))
+                    now="$(date +'%s')"
+                    calcTimeDiff=$(($now - $rdmDeviceLastseen))
 
-                        if [[ $calcTimeDiff -gt 300 ]]; then
-                                log "Last seen at RDM is greater than 5 minutes -> MITM Service will be restarting..."
-                                curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"restart","RPL":"'$atvdetails_interval'"}'
-                                force_restart
-                                led_blue
-                                counter=$((counter+1))
-                                log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
-                        elif [[ $calcTimeDiff -le 60 ]]; then
-                                log "Our device is live!"
-                                counter=0
-                                led_red
-                        else
-                                log "Last seen time is a bit off. Will check again later."
+                    if [[ $calcTimeDiff -gt 300 ]]; then
+                        log "Last seen at RDM is greater than 5 minutes -> MITM Service will be restarting..."
+                        curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"restart","RPL":"'$atvdetails_interval'"}'
+                        force_restart
+                        led_blue
+                        counter=$((counter+1))
+                        log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
+                    elif [[ $calcTimeDiff -le 60 ]]; then
+                        log "Our device is live!"
                         counter=0
                         led_red
-                        fi
+                    else
+                        log "Last seen time is a bit off. Will check again later."
+                        counter=0
+                        led_red
+                    fi
                 fi
             log "Scheduling next check in 4 minutes..."
         done
     ) &
 elif [ "$(pm list packages $GOCHEATSPKG)" = "package:$GOCHEATSPKG" -a "$mitm" = "gc" -a "$emagiskenable" = true ]; then
-(
+    (
         log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service in 4 minutes..."
         counter=0
         rdmDeviceID=1
@@ -251,13 +251,13 @@ elif [ "$(pm list packages $GOCHEATSPKG)" = "package:$GOCHEATSPKG" -a "$mitm" = 
             sleep $((240+$RANDOM%10))
             configfile_rdm
 
-            if [[ $counter -gt 3 ]];then
-            log "Critical restart threshold of $counter reached. Rebooting device..."
-            curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"reboot","RPL":"'$atvdetails_interval'"}'
-            sleep 1
-            reboot
-            # We need to wait for the reboot to actually happen or the process might be interrupted
-            sleep 60 
+            if [[ $counter -gt 3 ]]; then
+                log "Critical restart threshold of $counter reached. Rebooting device..."
+                curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"reboot","RPL":"'$atvdetails_interval'"}'
+                sleep 1
+                reboot
+                # We need to wait for the reboot to actually happen or the process might be interrupted
+                sleep 60 
             fi
 
             log "Started health check!"
@@ -265,47 +265,47 @@ elif [ "$(pm list packages $GOCHEATSPKG)" = "package:$GOCHEATSPKG" -a "$mitm" = 
             rdmDeviceInfo=$(curl -s -k "$rdm_backendURL"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
             rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
 
-                until [[ $rdmDeviceName = $gcDeviceName ]]
-                do
-                        $((rdmDeviceID++))
-                        rdmDeviceInfo=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
-                        rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+            until [[ $rdmDeviceName = $gcDeviceName ]]
+            do
+                $((rdmDeviceID++))
+                rdmDeviceInfo=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
+                rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
 
-                        if [[ -z $rdmDeviceInfo ]]; then
+                if [[ -z $rdmDeviceInfo ]]; then
                     log "Probably reached end of device list or encountered a different issue!"
                     log "Set RDM Device ID to 1, recheck RDM connection and repull $CONFIGFILE"
-                                rdmDeviceID=1
+                    rdmDeviceID=1
                     #repull rdm values + recheck rdm connection
                     configfile_rdm
-                                rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
-                        fi
-                done
-
-                log "Found our device! Checking for timestamps..."
-                rdmDeviceLastseen=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
-                if [[ -z $rdmDeviceLastseen ]]; then
-                        log "The device last seen status is empty!"
-                else
-                        now="$(date +'%s')"
-                        calcTimeDiff=$(($now - $rdmDeviceLastseen))
-
-                        if [[ $calcTimeDiff -gt 300 ]]; then
-                                log "Last seen at RDM is greater than 5 minutes -> MITM Service will be restarting..."
-                                curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"restart","RPL":"'$atvdetails_interval'"}'
-                                force_restart
-                                led_blue
-                                counter=$((counter+1))
-                                log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
-                        elif [[ $calcTimeDiff -le 60 ]]; then
-                                log "Our device is live!"
-                                counter=0
-                                led_red
-                        else
-                                log "Last seen time is a bit off. Will check again later."
-                        counter=0
-                        led_red
-                        fi
+                    rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
                 fi
+            done
+
+            log "Found our device! Checking for timestamps..."
+            rdmDeviceLastseen=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
+            if [[ -z $rdmDeviceLastseen ]]; then
+                log "The device last seen status is empty!"
+            else
+                now="$(date +'%s')"
+                calcTimeDiff=$(($now - $rdmDeviceLastseen))
+
+                if [[ $calcTimeDiff -gt 300 ]]; then
+                    log "Last seen at RDM is greater than 5 minutes -> MITM Service will be restarting..."
+                    curl -k -X POST $atvdetails_receiver_host:$atvdetails_receiver_port/reboot -H "Accept: application/json" -H "Content-Type: application/json" -d '{"deviceName":"'$deviceName'","reboot":"restart","RPL":"'$atvdetails_interval'"}'
+                    force_restart
+                    led_blue
+                    counter=$((counter+1))
+                    log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
+                elif [[ $calcTimeDiff -le 60 ]]; then
+                    log "Our device is live!"
+                    counter=0
+                    led_red
+                else
+                    log "Last seen time is a bit off. Will check again later."
+                    counter=0
+                    led_red
+                fi
+            fi
             log "Scheduling next check in 4 minutes..."
         done
     )
