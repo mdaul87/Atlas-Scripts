@@ -32,6 +32,13 @@ pgrep zygote >/dev/null && {
 
 log "System boot completed!"
 
+if [ -e /data/local/tmp/atlas_config.json ]; then
+    setprop net.hostname "$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')"
+    log "Set device hostname: $(getprop net.hostname)"
+else
+    log "Failed to set device hostname!"
+fi
+
 if [ -f "$MODDIR/ATVServices.sh" ]; then
     sleep 20
     log "Starting ATVServices.sh"
