@@ -60,7 +60,7 @@ force_restart() {
 
 configfile_rdm() {
     if [[ -s $CONFIGFILE ]]; then
-        log "$CONFIGFILE exists and has data. Data will be pulled."
+#        log "$CONFIGFILE exists and has data. Data will be pulled."
         source $CONFIGFILE
         export rdm_user rdm_password rdm_backendURL atvdetails_receiver_host atvdetails_receiver_port atvdetails_interval
     else
@@ -71,8 +71,8 @@ configfile_rdm() {
 
     rdmConnect=$(curl -i -s -k "$rdm_backendURL" | awk -F\/ '{print $2}' | awk -F" " '{print $3}' | sed -n '1p')
     if [[ $rdmConnect = "OK" ]]; then
-        log "RDM connection status: $rdmConnect"
-        log "RDM Connection was successful!"
+#        log "RDM connection status: $rdmConnect"
+#        log "RDM Connection was successful!"
         led_red
     elif [[ $rdmConnect = "Unauthorized" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
@@ -84,7 +84,6 @@ configfile_rdm() {
         log "The RDM Server couldn't response properly to eMagisk!"
         led_blue
         sleep $((240+$RANDOM%10))
-
     elif [[ -z $rdmConnect ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your ATV internet connection!"
@@ -192,7 +191,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
             sleep 60 
             fi
 
-            log "Started health check!"
+#            log "Started health check!"
             atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
             rdmDeviceInfo=$(curl -s -k "$rdm_backendURL"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
             rdmDeviceName=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
@@ -213,7 +212,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
                     fi
                 done
 
-                log "Found our device! Checking for timestamps..."
+#                log "Found our device! Checking for timestamps..."
                 rdmDeviceLastseen=$(curl -s -k "$rdm_backendURL" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
                 if [[ -z $rdmDeviceLastseen ]]; then
                     log "The device last seen status is empty!"
@@ -229,7 +228,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
                         counter=$((counter+1))
                         log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
                     elif [[ $calcTimeDiff -le 60 ]]; then
-                        log "Our device is live!"
+                        log "Device is live!"
                         counter=0
                         led_red
                     else
@@ -238,7 +237,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" -a "$mitm" = "atlas" 
                         led_red
                     fi
                 fi
-            log "Scheduling next check in 4 minutes..."
+#            log "Scheduling next check in 4 minutes..."
         done
     ) &
 elif [ "$(pm list packages $GOCHEATSPKG)" = "package:$GOCHEATSPKG" -a "$mitm" = "gc" -a "$emagiskenable" = true ]; then
